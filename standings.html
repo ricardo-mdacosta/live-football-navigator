@@ -1,0 +1,139 @@
+<!-- standings.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Data - League Standings</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+        .header { text-align: center; color: #ffffff; }
+        .header a { color: #00aaff; text-decoration: none; }
+        #standings-container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+        }
+        thead tr {
+            border-bottom: 2px solid #333;
+        }
+        tbody tr {
+            border-bottom: 1px solid #2a2a2a;
+        }
+        tbody tr:last-child {
+            border-bottom: none;
+        }
+        td.position, th.position { text-align: center; }
+        td.team-name { font-weight: bold; }
+        #loading { text-align: center; font-size: 1.2em; padding: 40px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <p><a id="back-link" href="/history.html">&larr; Back to Leagues</a></p>
+        <h1 id="page-title">League Standings</h1>
+    </div>
+    <div id="standings-container">
+        <div id="loading">Loading standings...</div>
+        <table id="standings-table" style="display:none;">
+            <thead>
+                <tr>
+                    <th class="position">#</th>
+                    <th>Team</th>
+                    <th>MP</th>
+                    <th>W</th>
+                    <th>D</th>
+                    <th>L</th>
+                    <th>G</th>
+                    <th>Pts</th>
+                </tr>
+            </thead>
+            <tbody id="standings-body">
+                <!-- Table rows will be inserted here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const loadingDiv = document.getElementById('loading');
+            const table = document.getElementById('standings-table');
+            const tableBody = document.getElementById('standings-body');
+            const title = document.getElementById('page-title');
+            const backLink = document.getElementById('back-link');
+
+            // Get parameters from the URL
+            const params = new URLSearchParams(window.location.search);
+            const leagueId = params.get('league_id');
+            const leagueName = params.get('league_name');
+            const countryId = params.get('country_id'); // For the back link
+
+            if (!leagueId) {
+                loadingDiv.textContent = 'Error: No league selected.';
+                return;
+            }
+
+            title.textContent = leagueName;
+            // Set the back link to go to the correct country's league page
+            backLink.href = `leagues.html?country_id=${countryId}&country_name=Unknown`;
+
+
+            // Fetch the standings from our backend
+            fetch(`http://127.0.0.1:8000/standings/${leagueId}`)
+                .then(response => response.json())
+                .then(standings => {
+                    loadingDiv.style.display = 'none';
+                    table.style.display = 'table';
+
+                    if (standings.error || standings.length === 0) {
+                        standingsContainer.innerHTML = `<p>Standings not available for this league.</p>`;
+                        return;
+                    }
+                    
+                    standings.forEach(team => {
+                        const row = document.createElement('tr');
+                        
+                        // Example: "40:30"
+                        const goals = `${team.overall_league_GF}:${team.overall_league_GA}`;
+
+                        row.innerHTML = `
+                            <td class="position">${team.overall_league_position}</td>
+                            <td class="team-name">${team.team_name}</td>
+                            <td>${team.overall_league_payed}</td>
+                            <td>${team.overall_league_W}</td>
+                            <td>${team.overall_league_D}</td>
+                            <td>${team.overall_league_L}</td>
+                            <td>${goals}</td>
+                            <td>${team.overall_league_PTS}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                })
+                .catch(error => {
+                    console.error('Failed to fetch standings:', error);
+                    loadingDiv.textContent = 'Failed to load standings.';
+                    loadingDiv.style.color = '#ff4d4d';
+                });
+        });
+    </script>
+
+</body>
+</html>

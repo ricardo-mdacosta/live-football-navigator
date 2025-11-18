@@ -1,0 +1,120 @@
+<!-- leagues.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historical Data - Select a League</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+        }
+        .header { text-align: center; color: #ffffff; }
+        .header a { color: #00aaff; text-decoration: none; }
+        #leagues-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+        .league-card {
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .league-card:hover {
+            transform: translateY(-5px);
+            background-color: #2a2a2a;
+        }
+        .league-card img {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+        #loading { text-align: center; font-size: 1.2em; padding: 40px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <p><a href="/history.html">&larr; Back to Countries</a></p>
+        <h1 id="page-title">Select a League</h1>
+    </div>
+    <div id="leagues-container">
+        <div id="loading">Loading leagues...</div>
+    </div>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const leaguesContainer = document.getElementById('leagues-container');
+        const loadingDiv = document.getElementById('loading');
+        const title = document.getElementById('page-title');
+
+        // Get the country ID and name from the URL
+        const params = new URLSearchParams(window.location.search);
+        const countryId = params.get('country_id');
+        const countryName = params.get('country_name');
+
+        if (!countryId) {
+            loadingDiv.textContent = 'Error: No country selected.';
+            return;
+        }
+
+        title.textContent = `Leagues in ${countryName}`;
+
+        // Fetch the list of leagues from our backend
+        fetch(`http://127.0.0.1:8000/leagues/${countryId}`)
+            .then(response => response.json())
+            .then(leagues => {
+                loadingDiv.style.display = 'none';
+
+                if (leagues.error) {
+                    leaguesContainer.innerHTML = `<p style="color: #ff4d4d;">Error: ${leagues.error}</p>`;
+                    return;
+                }
+                 if (leagues.length === 0) {
+                    leaguesContainer.innerHTML = `<p>No leagues found for this country.</p>`;
+                    return;
+                }
+                
+                leagues.forEach(league => {
+                    const card = document.createElement('div');
+                    card.className = 'league-card';
+                    card.dataset.leagueId = league.league_id;
+
+                    const logo = league.league_logo || 'https://apiv3.apifootball.com/badges/logo_leagues/155_esiliiga-a.png';
+
+                    card.innerHTML = `
+                        <img src="${logo}" alt="${league.league_name}">
+                        <div>${league.league_name}</div>
+                    `;
+
+                    // --- THIS IS THE CORRECTED LINE ---
+                    card.addEventListener('click', () => {
+                        // This now correctly uses the variables to build the URL for the next page.
+                        window.location.href = `standings.html?league_id=${league.league_id}&league_name=${encodeURIComponent(league.league_name)}&country_id=${countryId}`;
+                    });
+
+                    leaguesContainer.appendChild(card);
+                });
+            })
+            .catch(error => {
+                console.error('Failed to fetch leagues:', error);
+                loadingDiv.textContent = 'Failed to load leagues.';
+                loadingDiv.style.color = '#ff4d4d';
+            });
+    });
+</script>
+
+</body>
+</html>
