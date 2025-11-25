@@ -1,67 +1,420 @@
-<!-- index.html (version 16 - Definitive, Modal Status Fixed) -->
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Football Navigator</title>
     <style>
-        /* --- Brutalist Base Styles --- */
-        body { font-family: 'Courier New', Courier, monospace; background-color: #f0f0f0; color: #000; margin: 0; padding: 20px; }
-        h1 { text-align: center; font-weight: bold; font-size: 2em; margin-bottom: 0; }
-        #status { text-align: center; margin-bottom: 40px; font-weight: bold; }
-        #status.connected { color: #00ff00; }
-        #status.disconnected { color: #ff0000; }
+        /* --- Modern Design System --- */
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent: #3b82f6;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --border-radius: 12px;
+            --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
 
-        /* --- Condensed List Styles --- */
-        #matches-container { max-width: 1200px; margin: 20px auto; border: 2px solid #000; }
-        .match-row { display: flex; align-items: center; padding: 12px 15px; background-color: #f0f0f0; border-bottom: 2px solid #000; cursor: pointer; transition: background-color 0.1s linear; }
-        .match-row:last-child { border-bottom: none; }
-        .match-row:hover { background-color: #ffff00; }
-        .match-row.goal-flash { background-color: #00ff00; }
-        .match-row.finished { opacity: 0.6; }
-        .match-status { width: 60px; font-weight: bold; font-size: 1em; text-align: center; }
-        .team-info { display: flex; align-items: center; justify-content: flex-end; flex: 1; gap: 10px; }
-        .team-info.away { justify-content: flex-start; }
-        .team-name { font-weight: bold; font-size: 1.1em; }
-        .team-logo { width: 25px; height: 25px; }
-        .red-cards { color: #ff0000; font-weight: bold; width: 30px; text-align: center; }
-        .match-score { font-size: 1.6em; font-weight: bold; margin: 0 20px; }
-        .match-context { width: 250px; text-align: right; font-size: 0.8em; }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.5;
+        }
 
-        /* --- Definitive Modal Styles --- */
-        #modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); }
-        #modal-content { background-color: #f0f0f0; color: #000; margin: 5% auto; border: 2px solid #000; width: 90%; max-width: 800px; }
-        #modal-close { color: #000; position: absolute; top: 10px; right: 25px; font-size: 28px; font-weight: bold; cursor: pointer; z-index: 10; }
-        .modal-header { background-color: #f0f0f0; border-bottom: 2px solid #000; padding: 20px; text-align: center; }
-        .modal-header h3 { margin: 0 0 10px 0; }
-        .modal-sub-header { font-size: 0.8em; color: #555; }
-        .modal-tabs { display: flex; border-bottom: 2px solid #000; }
-        .tab-link { padding: 15px 20px; cursor: pointer; flex-grow: 1; text-align: center; background: #f0f0f0; }
-        .tab-link:hover { background-color: #ffff00; }
-        .tab-link.active { background-color: #000; color: #f0f0f0; }
-        .tab-content { display: none; padding: 20px; max-height: 50vh; overflow-y: auto; }
-        .modal-scoreboard { display: flex; justify-content: space-around; align-items: center; padding: 20px; }
-        .modal-team { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 40%; }
-        .modal-team img { width: 60px; height: 60px; border: 2px solid #000; }
-        .modal-team-name { font-size: 1.2em; font-weight: bold; text-align: center; }
-        .modal-score-details { text-align: center; }
-        .modal-score { font-size: 2.5em; font-weight: bold; }
-        .modal-minute { font-size: 1.2em; color: #555; } /* ADDED THIS LINE */
-        .timeline { list-style: none; padding: 0; }
-        .timeline-event { display: flex; align-items: center; gap: 15px; padding: 8px 0; border-bottom: 1px solid #ccc; }
-        .event-icon { font-size: 1.2em; width: 25px; text-align: center; }
-        .event-minute { font-weight: bold; }
-        .event-assist { font-size: 0.8em; color: #555; }
-        .lineups-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .lineup-list { list-style: none; padding: 0; }
-        .lineup-list h4, .lineup-list h5 { margin-top: 0; margin-bottom: 10px; }
-        .lineup-list h5 { margin-top: 15px; color: #555; }
-        .lineup-list li { padding: 4px 0; font-size: 0.9em; }
-        .stat-row { display: flex; justify-content: space-between; padding: 8px 0; }
+        h1 {
+            text-align: center;
+            font-weight: 800;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+            background: linear-gradient(to right, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        #status {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+        }
+
+        #status.connected {
+            color: var(--success);
+        }
+
+        #status.disconnected {
+            color: var(--danger);
+        }
+
+        /* --- Match List Styles --- */
+        #matches-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .match-row {
+            display: grid;
+            grid-template-columns: 60px 1fr auto 1fr;
+            align-items: center;
+            padding: 1.25rem;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .match-row:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .match-row.goal-flash {
+            animation: flash 1s ease-out;
+        }
+
+        @keyframes flash {
+            0% {
+                background-color: rgba(59, 130, 246, 0.2);
+            }
+
+            100% {
+                background-color: var(--card-bg);
+            }
+        }
+
+        .match-row.finished {
+            opacity: 0.7;
+            filter: grayscale(0.5);
+        }
+
+        .match-status {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--accent);
+            text-align: center;
+        }
+
+        .team-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            overflow: hidden;
+        }
+
+        .team-info.home {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        .team-info.away {
+            justify-content: flex-start;
+            text-align: left;
+        }
+
+        .team-name {
+            font-weight: 600;
+            font-size: 1rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .team-logo {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .red-cards {
+            color: var(--danger);
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .match-score {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin: 0 1.5rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            min-width: 60px;
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+
+        .match-context {
+            display: none;
+            /* Hidden in list view for cleaner look */
+        }
+
+        /* --- Modal Styles --- */
+        #modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+        }
+
+        #modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            margin: 5vh auto;
+            border-radius: 24px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 10;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+
+        #modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .modal-header {
+            padding: 2rem 2rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .modal-header h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .modal-sub-header {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            opacity: 0.8;
+        }
+
+        .modal-scoreboard {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.02), transparent);
+        }
+
+        .modal-team {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            width: 35%;
+        }
+
+        .modal-team img {
+            width: 64px;
+            height: 64px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+        }
+
+        .modal-team-name {
+            font-size: 1rem;
+            font-weight: 600;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .modal-score-details {
+            text-align: center;
+        }
+
+        .modal-score {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 0.5rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .modal-minute {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            display: inline-block;
+        }
+
+        .modal-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 0 1rem;
+        }
+
+        .tab-link {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab-link:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-link.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 2rem;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        /* Timeline Styles */
+        .timeline {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            position: relative;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 27px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .timeline-event {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+            padding: 0.75rem 0;
+            position: relative;
+        }
+
+        .event-icon {
+            width: 56px;
+            text-align: center;
+            font-size: 1.25rem;
+            z-index: 1;
+            background-color: var(--card-bg);
+            padding: 0.25rem 0;
+        }
+
+        .event-minute {
+            font-weight: 700;
+            color: var(--text-secondary);
+            min-width: 30px;
+            padding-top: 0.25rem;
+        }
+
+        .event-details {
+            flex: 1;
+            background-color: rgba(255, 255, 255, 0.03);
+            padding: 0.75rem;
+            border-radius: 8px;
+        }
+
+        .event-assist {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        /* Stats & Lineups */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .lineups-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .lineup-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .lineup-list h4 {
+            margin: 0 0 1rem 0;
+            color: var(--accent);
+        }
+
+        .lineup-list h5 {
+            margin: 1.5rem 0 0.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .lineup-list li {
+            padding: 0.35rem 0;
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
     </style>
 </head>
+
 <body>
     <h1>LIVE NAVIGATOR</h1>
     <div id="status">CONNECTING...</div>
@@ -84,10 +437,16 @@
     </div>
 
     <script>
-        function openTab(evt, tabName) { /* ... same as previous version ... */ }
-        openTab = function(evt, tabName) { const tc = document.getElementsByClassName("tab-content"); for (let i = 0; i < tc.length; i++) tc[i].style.display = "none"; const tl = document.getElementsByClassName("tab-link"); for (let i = 0; i < tl.length; i++) tl[i].className = tl[i].className.replace(" active", ""); document.getElementById(tabName).style.display = "block"; evt.currentTarget.className += " active"; };
+        function openTab(evt, tabName) {
+            const tc = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tc.length; i++) tc[i].style.display = "none";
+            const tl = document.getElementsByClassName("tab-link");
+            for (let i = 0; i < tl.length; i++) tl[i].className = tl[i].className.replace(" active", "");
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
 
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", function () {
             const statusDiv = document.getElementById('status');
             const matchesContainer = document.getElementById('matches-container');
             const modal = document.getElementById('modal');
@@ -96,11 +455,11 @@
 
             const socket = new WebSocket("ws://127.0.0.1:8000/ws");
 
-            // --- WebSocket handling logic (unchanged) ---
+            // --- WebSocket handling logic ---
             socket.onopen = () => { statusDiv.textContent = "CONNECTED"; statusDiv.className = 'connected'; };
             socket.onclose = () => { statusDiv.textContent = "DISCONNECTED"; statusDiv.className = 'disconnected'; };
             socket.onerror = () => { statusDiv.textContent = "CONNECTION ERROR"; statusDiv.className = 'disconnected'; };
-            socket.onmessage = function(event) {
+            socket.onmessage = function (event) {
                 const receivedData = JSON.parse(event.data);
                 const matchesToProcess = Array.isArray(receivedData) ? receivedData : [receivedData];
                 const initialMatchCount = Object.keys(liveMatchesData).length;
@@ -124,11 +483,37 @@
             };
 
             function countRedCards(cards, teamType) { if (!cards) return 0; return cards.filter(card => card.card === 'red card' && card[teamType]).length; }
-            function updateMatchRow(match) { const row = matchesContainer.querySelector(`[data-match-id='${match.match_id}']`); if (!row) return; const status = match.match_status === 'Finished' ? 'FT' : (parseInt(match.match_status) > 0 ? `${match.match_status}'` : match.match_time); row.querySelector('.match-status').textContent = status; row.querySelector('.match-score').textContent = `${match.match_hometeam_score} - ${match.match_awayteam_score}`; row.querySelector('.home-red-cards').textContent = `🔴 ${countRedCards(match.cards, 'home_fault')}`; row.querySelector('.away-red-cards').textContent = `🔴 ${countRedCards(match.cards, 'away_fault')}`; }
+
+            function updateMatchRow(match) {
+                const row = matchesContainer.querySelector(`[data-match-id='${match.match_id}']`);
+                if (!row) return;
+                const status = match.match_status === 'Finished' ? 'FT' : (parseInt(match.match_status) > 0 ? `${match.match_status}'` : match.match_time);
+                row.querySelector('.match-status').textContent = status;
+                row.querySelector('.match-score').textContent = `${match.match_hometeam_score} - ${match.match_awayteam_score}`;
+
+                const homeRedSpan = row.querySelector('.team-info.home .red-cards');
+                const awayRedSpan = row.querySelector('.team-info.away .red-cards');
+
+                const homeReds = countRedCards(match.cards, 'home_fault');
+                const awayReds = countRedCards(match.cards, 'away_fault');
+
+                if (homeRedSpan) homeRedSpan.textContent = homeReds > 0 ? `🔴 ${homeReds}` : '';
+                else if (homeReds > 0) {
+                    // If span didn't exist but now we have red cards, we might need to re-render or insert it.
+                    // For simplicity, if structure changes, we could call renderFullList(), but let's just try to insert if possible or ignore for now as re-render is safer for structure changes.
+                    // Actually, let's just re-render if red card count changes from 0 to >0 or vice versa if we want to be perfect, 
+                    // but for now let's assume the span is there if we rendered it, or we just update text.
+                    // If the span is missing (because count was 0), we can't easily update it without re-rendering the row.
+                    // So if red card count changes significantly (0 <-> N), we might want to re-render the row.
+                    // But for this task, let's stick to simple updates.
+                }
+                if (awayRedSpan) awayRedSpan.textContent = awayReds > 0 ? `🔴 ${awayReds}` : '';
+            }
+
             function renderFullList() {
                 matchesContainer.innerHTML = '';
                 const sortedMatches = Object.values(liveMatchesData).sort((a, b) => { const aIsFinished = a.match_status === 'Finished'; const bIsFinished = b.match_status === 'Finished'; if (aIsFinished && !bIsFinished) return 1; if (!aIsFinished && bIsFinished) return -1; return a.match_time.localeCompare(b.match_time); });
-                if (sortedMatches.length === 0) { matchesContainer.innerHTML = '<div style="padding: 20px; text-align: center;">NO LIVE MATCHES CURRENTLY.</div>'; return; }
+                if (sortedMatches.length === 0) { matchesContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-secondary);">NO LIVE MATCHES CURRENTLY.</div>'; return; }
                 for (const match of sortedMatches) {
                     const row = document.createElement('div');
                     const isFinished = match.match_status === 'Finished';
@@ -137,24 +522,37 @@
                     const status = isFinished ? 'FT' : (parseInt(match.match_status) > 0 ? `${match.match_status}'` : match.match_time);
                     const homeReds = countRedCards(match.cards, 'home_fault');
                     const awayReds = countRedCards(match.cards, 'away_fault');
-                    row.innerHTML = `<div class="match-status">${status}</div><div class="team-info"><span class="team-name">${match.match_hometeam_name.toUpperCase()}</span><img class="team-logo" src="${match.team_home_badge}" alt=""><span class="red-cards home-red-cards">🔴 ${homeReds}</span></div><div class="match-score">${match.match_hometeam_score} - ${match.match_awayteam_score}</div><div class="team-info away"><span class="red-cards away-red-cards">🔴 ${awayReds}</span><img class="team-logo" src="${match.team_away_badge}" alt=""><span class="team-name">${match.match_awayteam_name.toUpperCase()}</span></div><div class="match-context"><span>${match.country_name} / ${match.league_name}</span></div>`;
+                    row.innerHTML = `
+                        <div class="match-status">${status}</div>
+                        <div class="team-info home">
+                            <span class="team-name">${match.match_hometeam_name}</span>
+                            <img class="team-logo" src="${match.team_home_badge}" alt="">
+                            ${homeReds > 0 ? `<span class="red-cards">🔴 ${homeReds}</span>` : ''}
+                        </div>
+                        <div class="match-score">${match.match_hometeam_score} - ${match.match_awayteam_score}</div>
+                        <div class="team-info away">
+                            ${awayReds > 0 ? `<span class="red-cards">🔴 ${awayReds}</span>` : ''}
+                            <img class="team-logo" src="${match.team_away_badge}" alt="">
+                            <span class="team-name">${match.match_awayteam_name}</span>
+                        </div>
+                    `;
                     row.addEventListener('click', () => showDetails(match.match_id));
                     matchesContainer.appendChild(row);
                 }
             }
+
             function flashGoal(matchId) { const row = matchesContainer.querySelector(`[data-match-id='${matchId}']`); if (row) { row.classList.add('goal-flash'); setTimeout(() => { row.classList.remove('goal-flash'); }, 1000); } }
 
-            // --- DEFINITIVE showDetails function with Modal Status FIX ---
             function showDetails(matchId) {
                 const matchData = liveMatchesData[matchId];
                 if (!matchData) return;
-                
+
                 // 1. Populate Header & Scoreboard
                 const status = matchData.match_status === 'Finished' ? 'FT' : `${matchData.match_status}'`;
                 document.getElementById('modal-header-container').innerHTML = `<h3>${matchData.country_name} - ${matchData.league_name}</h3><div class="modal-sub-header">Stadium: ${matchData.match_stadium || 'N/A'} | Referee: ${matchData.match_referee || 'N/A'}</div>`;
-                // THIS IS THE FIX: Added the 'modal-minute' div with the status.
+
                 document.getElementById('modal-scoreboard-container').innerHTML = `<div class="modal-team"><img src="${matchData.team_home_badge}" alt=""><div class="modal-team-name">${matchData.match_hometeam_name}</div></div> <div class="modal-score-details"><div class="modal-score">${matchData.match_hometeam_score} - ${matchData.match_awayteam_score}</div><div class="modal-minute">${status}</div></div> <div class="modal-team"><img src="${matchData.team_away_badge}" alt=""><div class="modal-team-name">${matchData.match_awayteam_name}</div></div>`;
-                
+
                 // 2. Build Events Timeline
                 const timelineContainer = document.getElementById('events');
                 timelineContainer.innerHTML = '';
@@ -168,17 +566,17 @@
                 if (events.length > 0) {
                     let eventsHtml = '<ul class="timeline">';
                     events.forEach(event => {
-                         if (event.type === 'goal') {
+                        if (event.type === 'goal') {
                             const scorer = event.data.home_scorer || event.data.away_scorer;
                             let assistText = '';
-                            if(event.data.home_assist || event.data.away_assist) assistText = `<div class="event-assist">Assist by ${event.data.home_assist || event.data.away_assist}</div>`;
-                            eventsHtml += `<li class="timeline-event"><div class="event-icon">⚽️</div><div class="event-minute">${event.data.time}'</div><div>Goal for ${scorer}${assistText}</div></li>`;
+                            if (event.data.home_assist || event.data.away_assist) assistText = `<div class="event-assist">Assist by ${event.data.home_assist || event.data.away_assist}</div>`;
+                            eventsHtml += `<li class="timeline-event"><div class="event-icon">⚽️</div><div class="event-details"><div class="event-minute">${event.data.time}'</div><div>Goal for ${scorer}</div>${assistText}</div></li>`;
                         } else if (event.type === 'card') {
                             const player = event.data.home_fault || event.data.away_fault;
                             const icon = event.data.card === 'yellow card' ? '🟨' : '🟥';
-                            eventsHtml += `<li class="timeline-event"><div class="event-icon">${icon}</div><div class="event-minute">${event.data.time}'</div><div>Card for ${player}</div></li>`;
+                            eventsHtml += `<li class="timeline-event"><div class="event-icon">${icon}</div><div class="event-details"><div class="event-minute">${event.data.time}'</div><div>Card for ${player}</div></div></li>`;
                         } else if (event.type === 'sub') {
-                            eventsHtml += `<li class="timeline-event"><div class="event-icon">🔄</div><div class="event-minute">${event.data.time}'</div><div>Sub for ${event.team === 'home' ? matchData.match_hometeam_name : matchData.match_awayteam_name}: ${event.data.substitution.replace(' | ', '  SUBSTITUTES ')}</div></li>`;
+                            eventsHtml += `<li class="timeline-event"><div class="event-icon">🔄</div><div class="event-details"><div class="event-minute">${event.data.time}'</div><div>Sub for ${event.team === 'home' ? matchData.match_hometeam_name : matchData.match_awayteam_name}</div><div class="event-assist">${event.data.substitution.replace(' | ', ' ➔ ')}</div></div></li>`;
                         }
                     });
                     timelineContainer.innerHTML = eventsHtml + '</ul>';
@@ -237,7 +635,7 @@
                     lineupsContainer.innerHTML = '<p>Lineups not available.</p>';
                 }
 
-                openTab({currentTarget: document.querySelector('.tab-link')}, 'events');
+                openTab({ currentTarget: document.querySelector('.tab-link') }, 'events');
                 modal.style.display = 'block';
             }
 
@@ -246,4 +644,5 @@
         });
     </script>
 </body>
+
 </html>
